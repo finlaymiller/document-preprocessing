@@ -1,11 +1,11 @@
 -r requirements.txt
 # Code Quality
-pre-commit==3.6.2
-black==24.2.0
-ruff==0.2.2
-isort==5.13.2
-mypy==1.8.0
+pre-commit
+black
+ruff
+isort
+mypy
 # Testing
-pytest==8.0.2
+pytest
 # Documentation
-Sphinx==7.2.6 
+Sphinx
