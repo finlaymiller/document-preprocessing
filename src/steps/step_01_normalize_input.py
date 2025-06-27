@@ -70,33 +70,32 @@ def process_image(image_path: str, output_dir: str, output_format: str) -> str:
         return output_path
 
 
-def normalize_file(
-    file_path: str, output_dir: str, pdf_dpi: int, output_format: str
-) -> Union[List[str], str]:
+def process_file(file_path: str, config: dict) -> Union[List[str], str]:
     """
     Normalize a single file (PDF or image) to a standard image format.
 
     This function acts as a dispatcher, calling the appropriate
-    processing function based on the file extension.
+    processing function based on the file extension and configuration.
 
     Parameters
     ----------
     file_path : str
         The path to the file to process.
-    output_dir : str
-        The directory to save the normalized image(s).
-    pdf_dpi : int
-        The DPI to use for PDF conversion.
-    output_format : str
-        The image format for the output files.
+    config : dict
+        The application configuration dictionary.
 
     Returns
     -------
     Union[List[str], str]
         A list of output paths for a PDF, or a single output path for an image.
     """
+    step_config = config["step_01_normalize_input"]
+    output_dir = step_config["output_dir"]
+    dpi = step_config["dpi"]
+    output_format = step_config["image_format"]
+
     extension = os.path.splitext(file_path)[1].lower()
     if extension == ".pdf":
-        return process_pdf(file_path, output_dir, pdf_dpi, output_format)
+        return process_pdf(file_path, output_dir, dpi, output_format)
     else:
         return process_image(file_path, output_dir, output_format)

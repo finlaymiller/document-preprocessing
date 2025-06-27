@@ -1,61 +1,58 @@
-# General settings
-pipeline:
-  - normalize_input
-  - preprocess_image
-  # - layout_analysis
-  # - enhance_image
-  # - ocr
-  # - post_ocr_cleanup
-  # - final_output
+# Application-level configuration
+app:
+  # The sequence of steps to run in the pipeline.
+  pipeline:
+    - "step_01_normalize_input"
+    - "step_02_preprocess_image"
 
-# Step-specific configurations
-steps:
-  normalize_input:
-    dpi: 300
-    output_format: "png"
-
-  preprocess_image:
-    grayscale: true
-    denoise:
-      enabled: true
-      kernel_size: [5, 5]
-    threshold:
-      enabled: true
-      method: "adaptive_gaussian" # or "otsu", "simple"
-      block_size: 11
-      c_value: 2
-    deskew:
-      enabled: true
-
-  enhance_image:
-    dewarp:
-      enabled: false # requires DocUNet model
-    super_resolution:
-      enabled: false # requires ESRGAN model
-
-  layout_analysis:
-    provider: "layoutparser" # or "tesseract"
-
-  ocr:
-    provider: "tesseract"
-    tesseract:
-      oem: 1 # LSTM engine
-      psm: 6 # single uniform block of text
-      lang: "eng"
-
-  post_ocr_cleanup:
-    spell_correction:
-      enabled: true
-      provider: "symspell" # requires dictionary
-
-# I/O directories
-paths:
-  input: "input"
-  output: "output"
-  models: "models"
-
-# Parallel processing settings
+# Dask configuration for parallel processing
 dask:
+  # Enable or disable parallel processing with Dask.
   enabled: true
-  # Number of workers, can be set to -1 to use all available cores
+  # Number of parallel workers. Use -1 to use all available CPU cores.
   n_workers: -1
+
+# Step 1: Input Normalization Configuration
+step_01_normalize_input:
+  # The input directory containing original documents (PDFs, images).
+  input_dir: "input"
+  # The output directory for normalized images.
+  output_dir: "output/01_normalized"
+  # Dots per inch (DPI) for rendering PDF pages as images.
+  dpi: 300
+  # The image format for the output files (e.g., 'png', 'tiff').
+  image_format: "png"
+
+# Step 2: Image Preprocessing Configuration
+step_02_preprocess_image:
+  # The input directory for this step, typically the output from step 1.
+  input_dir: "output/01_normalized"
+  # The main output directory for the final preprocessed images.
+  output_dir: "output/02_preprocessed/final"
+  # If true, saves the output of each sub-step into its own folder for debugging.
+  save_intermediate_steps: true
+  # The directory where intermediate outputs are stored.
+  intermediate_dir: "output/02_preprocessed"
+
+  # Each sub-step can be enabled and configured individually.
+  # The pipeline will execute them in the order defined here.
+  pipeline:
+    - type: "grayscale"
+      enabled: true
+
+    - type: "denoise"
+      enabled: true
+      # Gaussian blur kernel size. Must be odd numbers.
+      kernel_size: [5, 5]
+
+    - type: "threshold"
+      enabled: true
+      # Method can be 'adaptive_gaussian', 'simple', or 'otsu'.
+      method: "adaptive_gaussian"
+      # Block size for adaptive thresholding.
+      block_size: 11
+      # Constant subtracted from the mean.
+      c: 2
+
+    - type: "deskew"
+      enabled: true
