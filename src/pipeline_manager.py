@@ -1,11 +1,9 @@
 import logging
 from typing import List
 
-from dask import compute, delayed
-from dask.distributed import Client, LocalCluster
-
 from steps.step_01_normalize_input import process_file as normalize_file
-from steps.step_02_preprocess_image import process_image
+from steps.step_02_preprocess_image import process_image as preprocess_image
+from steps.step_03_layout_analysis import process_image as layout_analysis
 from utils.config import load_config
 from utils.files import find_files
 
@@ -26,26 +24,6 @@ class PipelineManager:
         """
         self.config = load_config(config_path)
         self.logger = logging.getLogger(__name__)
-        self.dask_enabled = self.config.get("dask", {}).get("enabled", True)
-        self.client = None
-
-        if self.dask_enabled:
-            self._setup_dask()
-
-    def _setup_dask(self) -> None:
-        """
-        Set up the Dask client.
-        """
-        dask_config = self.config.get("dask", {})
-        num_workers = dask_config.get("n_workers", -1)
-
-        if num_workers == -1:
-            cluster = LocalCluster()
-        else:
-            cluster = LocalCluster(n_workers=int(num_workers))
-
-        self.client = Client(cluster)
-        self.logger.info(f"Dask client started: {self.client.dashboard_link}")
 
     def run(self) -> None:
         """
@@ -73,10 +51,18 @@ class PipelineManager:
                 f"Step 2 (Preprocess Image) completed. Produced {len(step_input_files)} files."
             )
 
+        if "step_03_layout_analysis" in pipeline_steps:
+            if not step_input_files:
+                raise ValueError(
+                    "Cannot run step_03_layout_analysis without output from the previous step."
+                )
+            step_input_files = self._run_step_03_layout_analysis(step_input_files)
+            self.logger.info(
+                f"Step 3 (Layout Analysis) completed. Produced {len(step_input_files)} files."
+            )
+
         # Subsequent steps will be added here
         self.logger.info("Pipeline finished.")
-        if self.client:
-            self.client.close()
 
     def _run_step_01_normalize_input(self) -> List[str]:
         """
@@ -96,15 +82,7 @@ class PipelineManager:
         input_files = list(find_files(input_dir, supported_extensions))
         self.logger.info(f"Found {len(input_files)} files to process in '{input_dir}'.")
 
-        tasks = [
-            delayed(normalize_file)(file_path=f, config=self.config)
-            for f in input_files
-        ]
-
-        if self.dask_enabled:
-            results = compute(*tasks)
-        else:
-            results = [task.compute() for task in tasks]
+        results = [normalize_file(file_path=f, config=self.config) for f in input_files]
 
         # flatten the list of lists that may result from pdf processing
         processed_files = []
@@ -132,14 +110,36 @@ class PipelineManager:
         """
         self.logger.info("Running Step 2: Preprocess Image...")
 
-        tasks = [
-            delayed(process_image)(image_path=f, config=self.config)
+        results = [
+            preprocess_image(image_path=f, config=self.config) for f in input_files
+        ]
+
+        return list(results)
+
+    def _run_step_03_layout_analysis(self, input_files: List[str]) -> List[str]:
+        """
+        Run the layout analysis step of the pipeline.
+
+        Parameters
+        ----------
+        input_files : List[str]
+            A list of paths to the preprocessed image files from the previous step.
+
+        Returns
+        -------
+        List[str]
+            A list of paths to the json layout data files.
+        """
+        self.logger.info("Running Step 3: Layout Analysis...")
+
+        results = [
+            layout_analysis(
+                image_path=f,
+                config=self.config,
+            )
             for f in input_files
         ]
 
-        if self.dask_enabled:
-            results = compute(*tasks)
-        else:
-            results = [task.compute() for task in tasks]
-
-        return list(results)
+        # results are tuples of (json_path, viz_path), we pass json_path to next step
+        json_files = [res[0] for res in results]
+        return json_files

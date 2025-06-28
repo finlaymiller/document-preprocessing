@@ -13,7 +13,6 @@ This project provides a modular pipeline to preprocess PDFs and images, enhancin
 -   **PDF and Image Support:** Process both PDF files and common image formats.
 -   **Configurable Pipeline:** Enable, disable, and tune each processing step via a YAML configuration file.
 -   **Intermediate Outputs:** Each step saves its output, making it easy to debug and visualize the pipeline's effects.
--   **Parallel Processing:** Uses Dask to process large batches of documents in parallel.
 -   **Quality Assurance:** Designed to support QA loops by exposing intermediate results.
 
 ## Pipeline Flow

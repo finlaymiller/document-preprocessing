@@ -1,4 +1,5 @@
 PyYAML
+requests
 rich
 pdf2image
 Pillow
@@ -7,13 +8,8 @@ numpy
 scikit-image
 pytesseract
 layoutparser
-# Recommend installing torch separately first, but include for completeness
-# torch==2.2.1
-# torchvision==0.17.1
-# For layoutparser[detectron2], Detectron2 must be installed manually.
-# Post-processing & Output
+layoutparser[detectron2]
 symspellpy
 pandas
 markdown-it-py
 PyMuPDF
-dask[complete]

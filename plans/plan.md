@@ -1,6 +1,6 @@
 # PDF OCR Pre-Processing Pipeline
 
-This document outlines a complete, modular pipeline for pre-processing PDFs or image-based documents to optimize OCR (Optical Character Recognition) accuracy. Each stage outputs its result to disk so that the effects of that step can be visually inspected and validated. The pipeline supports batch processing with parallelization via Dask.
+This document outlines a complete, modular pipeline for pre-processing PDFs or image-based documents to optimize OCR (Optical Character Recognition) accuracy. Each stage outputs its result to disk so that the effects of that step can be visually inspected and validated.
 
 ---
 
@@ -169,7 +169,7 @@ tesseract input.png output -l eng --oem 1 --psm 6
 
 ---
 
-## 9. Parallelization with Dask
+## 9. Parallelization with Dask **UNIMPLEMENTED**
 
 **Goal:** Speed up processing for large batches of documents.
 
@@ -205,4 +205,3 @@ PDF/Image --> Normalized Image --> Preprocess (gray, binarize, deskew) --> Layou
 ```
 
 This pipeline handles both PDFs and image inputs, outputs each step to disk for validation, and scales efficiently using Dask.
-
